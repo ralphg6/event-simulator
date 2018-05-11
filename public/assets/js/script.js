@@ -159,15 +159,20 @@ $(function(){
 		people.set_debug_render_colors("yellow", "black");
 		world.add(people);
 
-		rects[clientId].push(people)
+		let speed = randomSpeed();
+
+		rects[clientId].push({people, speed})
 	}
 
-	const FPS = 200;
-	const SPEED_BASE = 20 * FPS;
+	let FPS = 200;
+	const SPEED = 40 ;
 
 	function randomSpeed(){
-
-		return new SSCD.Vector(SPEED_BASE * (Math.random() - 0.5), SPEED_BASE * (Math.random() - 0.5));
+		//return new SSCD.Vector(SPEED_BASE * (Math.random() - 0.5), SPEED_BASE * (Math.random() - 0.5));
+		return {
+			x: SPEED * (Math.random() - 0.5) , 
+			y: SPEED * (Math.random() - 0.5)
+		};
 	} 
 
 	var camera_pos = new SSCD.Vector(0, 0);
@@ -180,8 +185,9 @@ $(function(){
 		ctx.clearRect(0, 0, canvas[0].width, canvas[0].height);
 		for(var clientId in rects){
 			let clientPeoples = rects[clientId];
-			for(var people of clientPeoples){
-				people.move(randomSpeed())
+			for(var p of clientPeoples){
+				let people = p.people;
+				people.move(new SSCD.Vector(p.speed.x / FPS, p.speed.y / FPS)); 
 
 				// pick object player collide with
 				var collide_with = world.pick_object(people);
@@ -200,15 +206,22 @@ $(function(){
 			}
 		}
 
-
-		
 	}
 
-	setInterval(function(){
-		
-		draw();
-		
-	}, 1000/FPS);
+	function loop(){
+		draw()
+	}
 
+	function startLoop(){
+		try{
+			loop();
+		}catch(e){
+			console.error(e)
+		}finally{
+			setTimeout(startLoop, 1);
+		}
+	}
+
+	startLoop()
 
 });

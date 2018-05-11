@@ -9,7 +9,7 @@ app.use(express.static(PUBLIC_DIR));
 
 app.get('/', function(req, res,next) {  
     res.sendFile(PUBLIC_DIR + '/index.html');
-});
+}); 
 
 // Delete this row if you want to see debug messages
 //io.set('log level', 1);
