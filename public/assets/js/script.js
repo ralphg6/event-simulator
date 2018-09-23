@@ -12,6 +12,7 @@ $(function(){
 	var doc = $(document),
 		win = $(window),
 		canvas = $('#paper'),
+		fps = $('#fps')
 		ctx = canvas[0].getContext('2d'),
 		instructions = $('#instructions');
 
@@ -155,7 +156,7 @@ $(function(){
 		// let body = people.add(new SSCD.Rectangle(new SSCD.Vector(0, 0), new SSCD.Vector(10, 10)));
 		// body.set_debug_render_colors("yellow", "black");
 
-		let people = new SSCD.Rectangle(new SSCD.Vector(x, y), new SSCD.Vector(10, 10));
+		let people = new SSCD.Circle(new SSCD.Vector(x, y), 10);
 		people.set_debug_render_colors("yellow", "black");
 		world.add(people);
 
@@ -164,8 +165,9 @@ $(function(){
 		rects[clientId].push({people, speed})
 	}
 
-	let FPS = 200;
-	const SPEED = 40 ;
+	const MAX_FPS = 100000000;
+	const MIN_INTERVAL = 1000 / MAX_FPS;
+	const SPEED = 80 ;
 
 	function randomSpeed(){
 		//return new SSCD.Vector(SPEED_BASE * (Math.random() - 0.5), SPEED_BASE * (Math.random() - 0.5));
@@ -187,7 +189,8 @@ $(function(){
 			let clientPeoples = rects[clientId];
 			for(var p of clientPeoples){
 				let people = p.people;
-				people.move(new SSCD.Vector(p.speed.x / FPS, p.speed.y / FPS)); 
+				let inverse_parcial_fps = METADATA.lastInterval / 1000
+				people.move(new SSCD.Vector(p.speed.x * inverse_parcial_fps, p.speed.y * inverse_parcial_fps)); 
 
 				// pick object player collide with
 				var collide_with = world.pick_object(people);
@@ -195,7 +198,7 @@ $(function(){
 				// if object found, use repel to prevent penetration
 				if (collide_with)
 				{
-					console.log("Collision Detected!");
+					//console.log("Collision Detected!");
 					collide_with.repel(people, 10, 5, 1, 1);
 					
 					// here we will update the position of the player sprite to match its collision body..
@@ -210,16 +213,38 @@ $(function(){
 
 	function loop(){
 		draw()
+		METADATA.frame++
 	}
 
 	function startLoop(){
+		const initTime = new Date().getTime()
 		try{
 			loop();
 		}catch(e){
 			console.error(e)
 		}finally{
-			setTimeout(startLoop, 1);
+			const endTime = new Date().getTime()
+			const interval = endTime - initTime
+			const waitTime = Math.max(MIN_INTERVAL - interval, 0)
+			METADATA.lastInterval = interval + waitTime
+			setTimeout(startLoop, waitTime);
 		}
+	}
+
+	const INTERVAL_FPS_UPDATE = 1000;
+
+	setInterval(function(){
+		//console.log(METADATA.frame, METADATA.lastFrame)
+		METADATA.fps = (METADATA.frame - METADATA.lastFrame) * 1000 / INTERVAL_FPS_UPDATE
+		//console.log(METADATA.fps)
+		fps.html(parseInt(METADATA.fps))
+		METADATA.lastFrame = METADATA.frame + 0
+	}, INTERVAL_FPS_UPDATE)
+
+	const METADATA = {
+		lastInterval : 0,
+		lastFrame: 0,
+		frame: 0
 	}
 
 	startLoop()
